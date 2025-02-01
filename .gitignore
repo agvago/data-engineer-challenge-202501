@@ -1,0 +1,4 @@
+dump/init.sh
+dump/init.sql
+lambda_function/packages/
+postgres/pg_data/

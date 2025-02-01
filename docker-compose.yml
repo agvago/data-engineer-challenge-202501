@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  localstack:
+    image: localstack/localstack
+    container_name: localstack
+    environment:
+      - SERVICES=s3,lambda,logs
+      - DEBUG=1
+      - AWS_ENDPOINT=http://localhost:4566
+      - GATEWAY_LISTEN=0.0.0.0:4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    ports:
+      - "4566:4566"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./init-localstack:/etc/localstack/init/ready.d"
+    networks:
+      - my-network
+    command: >
+      sh -c "localstack start & sleep 10 && /etc/localstack/init/ready.d/init.sh && wait"
+
+  postgres:
+    build: ./postgres
+    container_name: postgres_db
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - /dev/fuse
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"  # Expose PostgreSQL for external connections
+    volumes:
+      - ./postgres/pg_data:/var/lib/postgresql/data  # Persist data in the project folder
+      - ./postgres/init-postgres:/docker-entrypoint-initdb.d  # Automatically run SQL scripts at startup
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    driver: bridge
+
+volumes:
+  pg_data:
